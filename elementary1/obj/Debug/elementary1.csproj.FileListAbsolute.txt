@@ -6,3 +6,14 @@ D:\c-source\Active\elementary1\elementary1\obj\Debug\elementary1.Properties.Reso
 D:\c-source\Active\elementary1\elementary1\obj\Debug\elementary1.csproj.GenerateResource.Cache
 D:\c-source\Active\elementary1\elementary1\obj\Debug\elementary1.exe
 D:\c-source\Active\elementary1\elementary1\obj\Debug\elementary1.pdb
+D:\svn\git\elementary1\elementary1\obj\Debug\elementary1.exe
+D:\svn\git\elementary1\elementary1\obj\Debug\elementary1.pdb
+D:\svn\git\elementary1\elementary1\bin\Debug\elementary1.exe
+D:\svn\git\elementary1\elementary1\bin\Debug\elementary1.pdb
+D:\svn\git\elementary1\elementary1\obj\Debug\ResolveAssemblyReference.cache
+D:\svn\git\elementary1\elementary1\obj\Debug\elementary1.Form1.resources
+D:\svn\git\elementary1\elementary1\obj\Debug\elementary1.Properties.Resources.resources
+D:\svn\git\elementary1\elementary1\obj\Debug\elementary1.csproj.GenerateResource.Cache
+D:\svn\git\elementary1\elementary1\bin\Debug\eit-tools.dll
+D:\svn\git\elementary1\elementary1\bin\Debug\eit-tools.pdb
+D:\svn\git\elementary1\elementary1\bin\Debug\eit-tools.xml

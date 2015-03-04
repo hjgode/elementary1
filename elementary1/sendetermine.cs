@@ -1,31 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace elementary1
 {
     class sendung
     {
         string _sDate = "";
-        public string sDate
-        {
-            get { return _sDate; }
-        }
+        public string sDate{get { return _sDate; }}
+
         string _sTime = "";
-        public string sTime
-        {
-            get { return _sTime; }
-        }
-        public string sDatetime;
+        public string sTime{get { return _sTime; }}
+
+        public string _sDatetime;
+        public string sDatetime { get { return _sDatetime; } }
+        
         string _sStaffel = "";
-        public string sStaffel
-        {
-            get { return _sStaffel; }
-        }
+        public string sStaffel{get { return _sStaffel; }}
+        
         string _sEpisode = "";
         public string sEpisode { get { return _sEpisode; } }
+
         string _sTitel = "";
         public string sTitel { get { return _sTitel; } }
+
+        string _sTitleNormalized="";
+        public string sTitleNormalized { get { return _sTitleNormalized; } }
 
         public sendung(string sIn)
         {
@@ -36,8 +37,109 @@ namespace elementary1
             _sTime = sIn.Substring(16, 4);
             _sStaffel = sIn.Substring(0, 3);
             _sEpisode = sIn.Substring(3, 3);
+
             _sTitel = sIn.Substring(21);
-            sDatetime = _sDate + "_" + sTime;
+            _sTitleNormalized = RemapInternationalCharToAscii(_sTitel);
+
+            _sDatetime = _sDate + "_" + sTime;
+        }
+        //string escapeTitle(string sTitle)
+        //{
+        //    string s = sTitel;
+        //    s = sTitel.Replace('.', '_');
+        //    return s;
+        //}
+
+        string RemapInternationalCharToAscii(string s)
+        {
+            StringBuilder sb=new StringBuilder();
+            foreach (char c in s)
+                sb.Append(RemapInternationalCharToAscii(c));
+            return sb.ToString();
+        }
+        string RemapInternationalCharToAscii(char c)
+        {
+            string s = c.ToString().ToLowerInvariant();
+            if ("àåáâäãåą".Contains(s))
+            {
+                return "a";
+            }
+            else if ("èéêëę".Contains(s))
+            {
+                return "e";
+            }
+            else if ("ìíîïı".Contains(s))
+            {
+                return "i";
+            }
+            else if ("òóôõöøőð".Contains(s))
+            {
+                return "o";
+            }
+            else if ("ùúûüŭů".Contains(s))
+            {
+                return "u";
+            }
+            else if ("çćčĉ".Contains(s))
+            {
+                return "c";
+            }
+            else if ("żźž".Contains(s))
+            {
+                return "z";
+            }
+            else if ("śşšŝ".Contains(s))
+            {
+                return "s";
+            }
+            else if ("ñń".Contains(s))
+            {
+                return "n";
+            }
+            else if ("ýÿ".Contains(s))
+            {
+                return "y";
+            }
+            else if ("ğĝ".Contains(s))
+            {
+                return "g";
+            }
+            else if (". ".Contains(s))//replace point and blanks
+            {
+                return "_";
+            }
+            else if (c == 'ř')
+            {
+                return "r";
+            }
+            else if (c == 'ł')
+            {
+                return "l";
+            }
+            else if (c == 'đ')
+            {
+                return "d";
+            }
+            else if (c == 'ß')
+            {
+                return "ss";
+            }
+            else if (c == 'Þ')
+            {
+                return "th";
+            }
+            else if (c == 'ĥ')
+            {
+                return "h";
+            }
+            else if (c == 'ĵ')
+            {
+                return "j";
+            }
+            else
+            {
+                return c.ToString();
+            }
         }
     }
     class sendetermine
@@ -45,8 +147,16 @@ namespace elementary1
         public List<sendung> sendungen = new List<sendung>();
         public sendetermine()
         {
-            foreach(string s in termine)
-                sendungen.Add(new sendung(s));
+            foreach (string s in termine)
+            {
+                sendung sendung1 = new sendung(s);
+                if(!sendung1.sDate.StartsWith("2014")) //filter all events not starting 2015
+                    sendungen.Add(sendung1);
+            }
+            sendungen.Sort(delegate(sendung x, sendung y)
+            {
+                return x.sDatetime.CompareTo(y.sDatetime);
+            });
         }
         #region SendeTermine
         string[] termine = new string[]{
@@ -227,7 +337,7 @@ namespace elementary1
             "S01E01_20141210_2015_Ein aussichtsloser Fall",
             "S01E02_20141210_2100_Während du schliefst",
             "S01E01_20141212_0045_Ein aussichtsloser Fall",
-            "S1E02_20141212_0135_Während du schliefst",
+            "S01E02_20141212_0135_Während du schliefst",
             "S01E01_20141214_0020_Ein aussichtsloser Fall",
             "S01E02_20141214_0105_Während du schliefst",
             "S01E01_20141216_2350_Ein aussichtsloser Fall",
@@ -258,7 +368,7 @@ namespace elementary1
             "S01E08_20150121_0305_Rätselhafte Bombe",
             "S01E09_20150121_2015_Chinesische Medizin",
             "S01E10_20150121_2100_Der Leviathan",
-            "S1E09_20150123_0050_Chinesische Medizin",
+            "S01E09_20150123_0050_Chinesische Medizin",
             "S01E10_20150123_0135_Der Leviathan",
             "S01E09_20150124_2335_Chinesische Medizin",
             "S01E10_20150125_0020_Der Leviathan",

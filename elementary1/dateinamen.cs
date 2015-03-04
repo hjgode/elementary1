@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Windows.Forms;
+using System.IO;
 
 namespace elementary1
 {
@@ -11,8 +13,16 @@ namespace elementary1
             public string sDate { get; set; }
             public string sTime { get; set; }
             public string sNameOriginal { get; set; }
+            string _sNameNew = "";
+            public string sNameNew { get { return _sNameNew; } set { _sNameNew = value; } }
             public string sDatetime { get; set; }
-            public string sDatetimeMinusFive { get; set; }
+            
+            public string sDatetimePlusFive { get; set; } //some recordings start 5 minutes befor event
+            // not found: S00E00_20150130_2009_-_kabel_eins_HD_-_Elementary.eit
+            public string sDatetimePlusSix { get; set; } //some recordings start 6 minutes befor event
+
+            public string sDatetimePlusThree { get; set; } //some recordings start 3 minutes befor event
+
             public datei(string sIn)
             {
                 sNameOriginal = sIn;
@@ -25,13 +35,20 @@ namespace elementary1
                 sDate = sIn.Substring(offset, 8);
                 sTime = sIn.Substring(offset + 9, 4);
                 sDatetime=sDate+"_"+sTime;
-                //MinusFive calculation
+                //PlusFive calculation
                 DateTime dt = new DateTime(int.Parse(sDatetime.Substring(0, 4)), int.Parse(sDatetime.Substring(4, 2)), int.Parse(sDatetime.Substring(6, 2)),
                     int.Parse(sTime.Substring(0,2)), int.Parse(sTime.Substring(2,2)),0);
-                DateTime dtMinusFive = dt - new TimeSpan(0, 5, 0);
-                string sTimeMinusFive = dtMinusFive.Hour.ToString("00") + dtMinusFive.Minute.ToString("00");
-                sDatetimeMinusFive = dtMinusFive.Year.ToString("0000") + dtMinusFive.Month.ToString("00") + dtMinusFive.Day.ToString("00") +
-                    "_" + sTimeMinusFive;
+                DateTime dtPlusFive = dt + new TimeSpan(0, 5, 0);
+                string sTimePlusFive = dtPlusFive.Hour.ToString("00") + dtPlusFive.Minute.ToString("00");
+                sDatetimePlusFive = dtPlusFive.Year.ToString("0000") + dtPlusFive.Month.ToString("00") + dtPlusFive.Day.ToString("00") + "_" + sTimePlusFive;
+                //PlusSix
+                DateTime dtPlusSix = dt + new TimeSpan(0, 6, 0);
+                string sTimePlusSix = dtPlusSix.Hour.ToString("00") + dtPlusSix.Minute.ToString("00");
+                sDatetimePlusSix = dtPlusSix.Year.ToString("0000") + dtPlusSix.Month.ToString("00") + dtPlusSix.Day.ToString("00") + "_" + sTimePlusSix;
+                //PlusThree
+                DateTime dtPlusThree = dt + new TimeSpan(0, 3, 0);
+                string sTimePlusThree = dtPlusThree.Hour.ToString("00") + dtPlusThree.Minute.ToString("00");
+                sDatetimePlusThree = dtPlusThree.Year.ToString("0000") + dtPlusThree.Month.ToString("00") + dtPlusThree.Day.ToString("00") + "_" + sTimePlusThree;
             }
         }
         public List<datei> dateien = new List<datei>();
@@ -40,6 +57,64 @@ namespace elementary1
             foreach (string s in dateinamenliste)
                 //if (s.StartsWith("S00") || !s.StartsWith("S0")) //process only unknown events
                     dateien.Add(new datei(s));
+            dateien.Sort(delegate(datei x, datei y)
+            {
+                return x.sDatetime.CompareTo(y.sDatetime);
+            });
+
+        }
+        public string readFromDir(){
+            string sPath="";
+            System.Windows.Forms.FolderBrowserDialog fbd = new System.Windows.Forms.FolderBrowserDialog();
+            fbd.RootFolder = Environment.SpecialFolder.MyComputer;
+            if (fbd.ShowDialog() == DialogResult.OK)
+            {
+                dateien.Clear();
+                DirectoryInfo di = new DirectoryInfo(fbd.SelectedPath);
+                sPath = fbd.SelectedPath;
+                if (!sPath.EndsWith("\\"))
+                    sPath += "\\";
+                FileInfo[] files = di.GetFiles("*.eit");
+                foreach (FileInfo fi in files)
+                {
+                    //fixnames.fixRecordingFilename(sPath + fi.Name);
+                    dateien.Add(new datei(fi.Name));
+                }
+            }
+            else
+                MessageBox.Show("Getting files canceled");
+            return sPath;
+        }
+
+        public static void renameFileSet(string sFullNameOrg, string sNameNew)
+        {
+            string sPath=Path.GetDirectoryName(sFullNameOrg);
+            string sBaseNameOrg = Path.GetFileNameWithoutExtension(sFullNameOrg);
+            string sBaseNameNew = Path.GetFileNameWithoutExtension(sNameNew);
+
+            if(!sPath.EndsWith("\\"))
+                sPath+="\\";
+            
+            DirectoryInfo di = new DirectoryInfo(sPath);
+            FileInfo[] filesOrg = di.GetFiles(sBaseNameOrg + ".*");
+            foreach (FileInfo fiOld in filesOrg)
+            {
+                string sExtCurrent = getMyExtension(fiOld.Name);// Path.GetExtension(fiOld.Name);
+                string oldName = fiOld.Name;
+                string newName = sBaseNameNew + sExtCurrent;
+#if !DEBUG
+                System.Diagnostics.Debug.WriteLine("File.Move("+sPath + oldName+", "+sPath + newName+")\r\n");
+#else
+                File.Move(sPath + oldName, sPath + newName);
+#endif
+            }
+        }
+
+        static string getMyExtension(string s)
+        {
+            int pos = s.IndexOf(".");
+            string sBase = s.Substring(pos);
+            return sBase;
         }
 
         /// <summary>
@@ -48,16 +123,17 @@ namespace elementary1
         /// <param name="sSearch">20150201_0230
         /// yyyyMMdd_HHmm</param>
         /// <returns></returns>
-        public string newNameByDateTime(string sSearch)
+        public datei newNameByDateTime(string sSearch)
         {
+            datei _datei = null;
             string date=sSearch.Substring(0,8);
             string time=sSearch.Substring(9,4);
             foreach (datei d in dateien)
             {
-                if (d.sDatetime == sSearch || d.sDatetimeMinusFive==sSearch)
-                    return d.sDatetime;
+                if (d.sDatetime == sSearch || d.sDatetimePlusFive == sSearch || d.sDatetimePlusSix == sSearch || d.sDatetimePlusThree == sSearch)
+                    return d;
             }
-            return "";
+            return _datei;
         }
 
         #region Dateinamen
